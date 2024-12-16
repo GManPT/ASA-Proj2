@@ -60,14 +60,18 @@ int readInput() {
             workingStations[s2 - 1] = 1;
             emptyStations--;
         }
+        
 
         if (inputGraph[s1 - 1][cl - 1] == 0) { // in case this station is not connected to this line yet
             inputGraph[s1 - 1][cl - 1] = 1; // mark this station as connected to this line
             for (int j : auxiliarInputGraph[s1 - 1]) { // for each line that this station is connected to
                 if (graph[cl - 1][j - 1] == 0) {  // if the line is not connected with new line yet
                     graph[cl - 1][j - 1] = 1; // connect the lines
+                    graph[j - 1][cl - 1] = 1;
                     mainGraph[cl - 1].push_back(j); // add the line to the main graph
+                    mainGraph[j - 1].push_back(cl);
                 }
+                
             }
             auxiliarInputGraph[s1 - 1].push_back(cl);
         }
@@ -77,7 +81,9 @@ int readInput() {
             for (int j : auxiliarInputGraph[s2 - 1]) {
                 if (graph[cl - 1][j - 1] == 0) {
                     graph[cl - 1][j - 1] = 1;
+                    graph[j - 1][cl - 1] = 1;
                     mainGraph[cl - 1].push_back(j);
+                    mainGraph[j - 1].push_back(cl);
                 }
             }
             auxiliarInputGraph[s2 - 1].push_back(cl);
@@ -100,7 +106,7 @@ int readInput() {
 /// @param start the starting node
 /// @return the maximum distance from the starting node
 int bfs(int start) {
-    int totalNodes = l;
+    int totalNodes = l - 1;
     vector<bool> visited(l, false);
     vector<int> distance(l, -1);
     queue<int> q;
@@ -114,6 +120,7 @@ int bfs(int start) {
     while (!q.empty()) {
         int node = q.front();
         q.pop();
+
 
         for (int neighbor : mainGraph[node - 1]) {
             if (!visited[neighbor]) {
@@ -130,7 +137,6 @@ int bfs(int start) {
     }
     
     if (totalNodes > 0) {
-        cout << "TotalNodes: " << totalNodes << endl;
         return -1;
     }
     else {
@@ -143,7 +149,7 @@ int bfs(int start) {
 /// @return none
 void calculateDistance(int input) {
     // if the input is invalid or the bfs returns -1, print -1
-    if (input == -1 || bfs(0) == -1) {
+    if (input == -1 || bfs(1) == -1) {
         cout << "-1" << endl;
         return;
     }
