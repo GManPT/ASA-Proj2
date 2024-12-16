@@ -39,10 +39,11 @@ int readInput() {
     // Resize global variables
     graph.resize(l, vector<int>(l));
     mainGraph.resize(l);
-    inputGraph.resize(n, vector<int>(l));
+    inputGraph.resize(n + 1, vector<int>(l));
     auxiliarInputGraph.resize(n);
 
     emptyStations = n;
+    int input = 1;
     workingStations.resize(n);
     
 
@@ -64,6 +65,7 @@ int readInput() {
 
         if (inputGraph[s1 - 1][cl - 1] == 0) { // in case this station is not connected to this line yet
             inputGraph[s1 - 1][cl - 1] = 1; // mark this station as connected to this line
+            if (++inputGraph[n][cl - 1] == n) input = 0;
             for (int j : auxiliarInputGraph[s1 - 1]) { // for each line that this station is connected to
                 if (graph[cl - 1][j - 1] == 0) {  // if the line is not connected with new line yet
                     graph[cl - 1][j - 1] = 1; // connect the lines
@@ -78,6 +80,7 @@ int readInput() {
         
         if (inputGraph[s2 - 1][cl - 1] == 0) { // same process as above (for the 2nd station of the input line)
             inputGraph[s2 - 1][cl - 1] = 1;
+            if (++inputGraph[n][cl - 1] == n) input = 0;
             for (int j : auxiliarInputGraph[s2 - 1]) {
                 if (graph[cl - 1][j - 1] == 0) {
                     graph[cl - 1][j - 1] = 1;
@@ -90,14 +93,17 @@ int readInput() {
         }
     }
 
+    if (input == 0) {
+        // there is a line that runs through every station
+        return 0;
+    }
+
     if (emptyStations > 0) {
         // there are stations with no lines
         return -1;
-    }
-
-    else {
+    } else {
         // the input read was successful
-        return 0;
+        return input;
     }
 }
 
@@ -149,8 +155,13 @@ int bfs(int start) {
 /// @return none
 void calculateDistance(int input) {
     // if the input is invalid or the bfs returns -1, print -1
-    if (input == -1 || bfs(1) == -1) {
-        cout << "-1" << endl;
+    if (input == -1 || input == 0) {
+        cout << input << endl;
+        return;
+    }
+
+    if (bfs(1) == -1) {
+        cout << -1 << endl;
         return;
     }
 
