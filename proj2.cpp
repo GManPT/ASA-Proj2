@@ -44,11 +44,12 @@ int readInput() {
 
     emptyStations = n;
     workingStations.resize(n);
+    
 
     // Read input values
     for (int i = 0; i < m; i++) {
         int s1, s2, cl;
-
+        cin >> s1 >> s2 >> cl;
 
         // add s1 and s2 to workingStationsVector
         if (workingStations[s1 - 1] == 0) {
@@ -59,8 +60,6 @@ int readInput() {
             workingStations[s2 - 1] = 1;
             emptyStations--;
         }
-
-        cin >> s1 >> s2 >> cl;
 
         if (inputGraph[s1 - 1][cl - 1] == 0) { // in case this station is not connected to this line yet
             inputGraph[s1 - 1][cl - 1] = 1; // mark this station as connected to this line
@@ -116,21 +115,22 @@ int bfs(int start) {
         int node = q.front();
         q.pop();
 
-        for (int neighbor : mainGraph[node]) {
+        for (int neighbor : mainGraph[node - 1]) {
             if (!visited[neighbor]) {
                 visited[neighbor] = true;
-                totalNodes--;
                 distance[neighbor] = distance[node] + 1;
                 maxDistance = max(maxDistance, distance[neighbor]);
                 q.push(neighbor);
 
                 // update farthestNeighbor
                 farthestNeighbor = neighbor;
+                totalNodes--;
             }
         }
     }
-
+    
     if (totalNodes > 0) {
+        cout << "TotalNodes: " << totalNodes << endl;
         return -1;
     }
     else {
@@ -145,6 +145,7 @@ void calculateDistance(int input) {
     // if the input is invalid or the bfs returns -1, print -1
     if (input == -1 || bfs(0) == -1) {
         cout << "-1" << endl;
+        return;
     }
 
     // Get the farthest neighbor from the first bfs and run the bfs again
