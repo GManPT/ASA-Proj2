@@ -11,16 +11,16 @@ using namespace std;
 int n, m, l; // Number of stations, connections and lines
 
 // create a vector of vectors for a graph
-vector<vector<int>> graph;
-vector<vector<int>> mainGraph;
+vector<vector<short>> graph;
+vector<vector<short>> mainGraph;
 
 // create another graph for input information
-vector<vector<int>> inputGraph;
-vector<vector<int>> auxiliarInputGraph;
+vector<vector<short>> inputGraph;
+vector<vector<short>> auxiliarInputGraph;
 
 // create a vector and an integer variable to keep track of empty stations
 int emptyStations;
-vector<int> workingStations;
+vector<short> workingStations;
 
 // result of 1st bfs 
 int farthestNeighbor;
@@ -37,9 +37,9 @@ int readInput() {
     cin >> n >> m >> l;
 
     // Resize global variables
-    graph.resize(l, vector<int>(l));
+    graph.resize(l, vector<short>(l));
     mainGraph.resize(l);
-    inputGraph.resize(n + 1, vector<int>(l));
+    inputGraph.resize(n + 1, vector<short>(l));
     auxiliarInputGraph.resize(n);
 
     emptyStations = n;
@@ -117,8 +117,8 @@ int bfs(int start) {
     vector<int> distance(l, -1);
     queue<int> q;
 
-    visited[start] = true;
-    distance[start] = 0;
+    visited[start - 1] = true;
+    distance[start - 1] = 0;
     q.push(start);
 
     int maxDistance = 0;
@@ -127,12 +127,11 @@ int bfs(int start) {
         int node = q.front();
         q.pop();
 
-
         for (int neighbor : mainGraph[node - 1]) {
-            if (!visited[neighbor]) {
-                visited[neighbor] = true;
-                distance[neighbor] = distance[node] + 1;
-                maxDistance = max(maxDistance, distance[neighbor]);
+            if (!visited[neighbor - 1]) {
+                visited[neighbor - 1] = true;
+                distance[neighbor - 1] = distance[node - 1] + 1;
+                maxDistance = max(maxDistance, distance[neighbor - 1]);
                 q.push(neighbor);
 
                 // update farthestNeighbor
