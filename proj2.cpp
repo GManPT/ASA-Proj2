@@ -4,6 +4,8 @@
 #include <iostream>
 #include <vector>
 #include <algorithm>
+#include <set>
+#include <unordered_set>
 #include <queue>
 
 using namespace std;
@@ -11,16 +13,15 @@ using namespace std;
 int n, m, l; // Number of stations, connections and lines
 
 // create a vector of vectors for a graph
-vector<vector<short>> graph;
-vector<vector<short>> mainGraph;
+vector<set<int>> GRAPH;
 
 // create another graph for input information
-vector<vector<short>> inputGraph;
-vector<vector<short>> auxiliarInputGraph;
+vector<unordered_set<int>> INPUTGRAPH;
 
 // create a vector and an integer variable to keep track of empty stations
 int emptyStations;
-vector<short> workingStations;
+vector<int> workingStations;
+vector<int> stationsPerLine;
 
 // result of 1st bfs 
 int farthestNeighbor;
@@ -37,15 +38,13 @@ int readInput() {
     cin >> n >> m >> l;
 
     // Resize global variables
-    graph.resize(l, vector<short>(l));
-    mainGraph.resize(l);
-    inputGraph.resize(n + 1, vector<short>(l));
-    auxiliarInputGraph.resize(n);
+    GRAPH.resize(l, set<int>());
+    INPUTGRAPH.resize(n, unordered_set<int>());
 
     emptyStations = n;
     int input = 1;
     workingStations.resize(n);
-    
+    stationsPerLine.resize(l);
 
     // Read input values
     for (int i = 0; i < m; i++) {
@@ -62,34 +61,24 @@ int readInput() {
             emptyStations--;
         }
         
-
-        if (inputGraph[s1 - 1][cl - 1] == 0) { // in case this station is not connected to this line yet
-            inputGraph[s1 - 1][cl - 1] = 1; // mark this station as connected to this line
-            if (++inputGraph[n][cl - 1] == n) input = 0;
-            for (int j : auxiliarInputGraph[s1 - 1]) { // for each line that this station is connected to
-                if (graph[cl - 1][j - 1] == 0) {  // if the line is not connected with new line yet
-                    graph[cl - 1][j - 1] = 1; // connect the lines
-                    graph[j - 1][cl - 1] = 1;
-                    mainGraph[cl - 1].push_back(j); // add the line to the main graph
-                    mainGraph[j - 1].push_back(cl);
-                }
-                
+        auto res1 = INPUTGRAPH[s1 - 1].insert(cl);
+        if (res1.second) { // in case the insertion was successful
+            if (++stationsPerLine[cl - 1] == n) input = 0;
+            for (int x : INPUTGRAPH[s1 - 1]) { // for each element of the set
+                if (x == cl) continue;
+                GRAPH[x - 1].insert(cl);
+                GRAPH[cl - 1].insert(x);
             }
-            auxiliarInputGraph[s1 - 1].push_back(cl);
         }
         
-        if (inputGraph[s2 - 1][cl - 1] == 0) { // same process as above (for the 2nd station of the input line)
-            inputGraph[s2 - 1][cl - 1] = 1;
-            if (++inputGraph[n][cl - 1] == n) input = 0;
-            for (int j : auxiliarInputGraph[s2 - 1]) {
-                if (graph[cl - 1][j - 1] == 0) {
-                    graph[cl - 1][j - 1] = 1;
-                    graph[j - 1][cl - 1] = 1;
-                    mainGraph[cl - 1].push_back(j);
-                    mainGraph[j - 1].push_back(cl);
-                }
+        auto res2 = INPUTGRAPH[s2 - 1].insert(cl);
+        if (res2.second) {
+            if (++stationsPerLine[cl - 1] == n) input = 0;
+            for (int x : INPUTGRAPH[s2 - 1]) {
+                if (x == cl) continue;
+                GRAPH[x - 1].insert(cl);
+                GRAPH[cl - 1].insert(x);
             }
-            auxiliarInputGraph[s2 - 1].push_back(cl);
         }
     }
 
@@ -114,11 +103,10 @@ int readInput() {
 int bfs(int start) {
     int totalNodes = l - 1;
     vector<bool> visited(l, false);
-    vector<int> distance(l, -1);
+    vector<int> distance(l, 0);
     queue<int> q;
 
     visited[start - 1] = true;
-    distance[start - 1] = 0;
     q.push(start);
 
     int maxDistance = 0;
@@ -127,7 +115,7 @@ int bfs(int start) {
         int node = q.front();
         q.pop();
 
-        for (int neighbor : mainGraph[node - 1]) {
+        for (int neighbor : GRAPH[node - 1]) {
             if (!visited[neighbor - 1]) {
                 visited[neighbor - 1] = true;
                 distance[neighbor - 1] = distance[node - 1] + 1;

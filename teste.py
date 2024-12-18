@@ -1,5 +1,6 @@
 import time
 import random
+import math
 import subprocess
 import os
 import numpy as np
@@ -8,8 +9,8 @@ import matplotlib.pyplot as plt
 import matplotlib.colors as mcolors
 
 # Assume-se que esta no mesmo sitio que isto
-executavel = "proj1.cpp"
-valoresnm = []
+executavel = "proj2.cpp"
+valoresnl = []
 tempos = []
 
 
@@ -72,7 +73,7 @@ def gerar_testes(V, E, L, S):
 
     # Executar o programa para gerar o ficheiro e guardar em test.in
     with open("test.in", "w") as f:
-        subprocess.run(["./gera", str(V), str(E), str(L), "1"], stdout=f)
+        subprocess.run(["./gera", str(V), str(E), str(L)], stdout=f, stderr=subprocess.DEVNULL)
     
     # Representar visualmente se quiser-se
     if S == True:
@@ -87,18 +88,60 @@ para construir um gráfico
 def correr_teste():
     # Compilar o programa mesmo já compilado
     subprocess.run(["g++", "-std=c++11", "-O3", "-Wall", executavel, "-lm"])
+    i = 1
 
-    for i in range(1, 11):
-        # Gerar um teste
-        gerar_testes(10*i, 10*i, 3*i, False)
-        # Correr o programa para o teste
-        start = time.time()
-        subprocess.run(["./" + executavel], stdout=subprocess.DEVNULL)
-        end = time.time()
-        # Guardar o tempo
-        tempos.append(end - start)
-        valoresnm.append(10*i)
+    for n in range(100,50000,100):
+        for l in range(10, 1000, 10):
+            m = int(math.log(n*l))
+            gerar_testes(n, m, l, False)
+            with open("test.in", "r") as f:
+                start = time.time()
+                subprocess.run(["./" + "a.out"], stdin=f, stdout=subprocess.DEVNULL)
+                end = time.time()
+
+            print(f"Teste {i} com n={n}, m={n*l} e l={l} demorou {end-start} segundos")
+            i += 1
+            valoresnl.append(n * l)
+            tempos.append(end - start)
+
+    # Após coletar os dados, realizar a regressão por segmentos
+    realizar_regressao_polynomial(valoresnl, tempos)
+
+"""
+Realizar a regressão por segmentos dos tempos de execução
+"""
+def realizar_regressao_polynomial(valoresnl, tempos):
+    # Converte os dados para arrays numpy
+    X = np.array(valoresnl)
+    y = np.array(tempos)
+
+    # Define o grau do polinômio
+    grau = 2  # Você pode ajustar o grau conforme necessário
+
+    # Cria a matriz de design para a regressão polinomial
+    X_poly = np.column_stack([X**i for i in range(grau + 1)])
+
+    # Ajusta o modelo
+    modelo = sm.OLS(y, X_poly).fit()
+
+    # Gera previsões
+    y_pred = modelo.predict(X_poly)
+
+    # Plota os dados e a linha de ajuste
+    plt.scatter(X, y, color='blue', label='Dados reais')
+    plt.plot(X, y_pred, color='red', label='Tendencia')
+    plt.xlabel('f(n)')
+    plt.ylabel('Tempo (s)')
+    plt.legend()
+    plt.show()
 
 
 
-gerar_testes(7,8,3,True)
+correr_teste()
+
+
+
+
+            
+
+
