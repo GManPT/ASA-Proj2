@@ -7,6 +7,7 @@ import numpy as np
 import networkx as nx
 import matplotlib.pyplot as plt
 import matplotlib.colors as mcolors
+import statsmodels.api as sm 
 
 # Assume-se que esta no mesmo sitio que isto
 executavel = "proj2.cpp"
@@ -73,7 +74,7 @@ def gerar_testes(V, E, L, S):
 
     # Executar o programa para gerar o ficheiro e guardar em test.in
     with open("test.in", "w") as f:
-        subprocess.run(["./gera", str(V), str(E), str(L)], stdout=f, stderr=subprocess.DEVNULL)
+        subprocess.run(["./gera", str(V), str(E), str(L), "1"], stdout=f, stderr=subprocess.DEVNULL)
     
     # Representar visualmente se quiser-se
     if S == True:
@@ -90,19 +91,19 @@ def correr_teste():
     subprocess.run(["g++", "-std=c++11", "-O3", "-Wall", executavel, "-lm"])
     i = 1
 
-    for n in range(100,50000,100):
-        for l in range(10, 1000, 10):
-            m = int(math.log(n*l))
-            gerar_testes(n, m, l, False)
-            with open("test.in", "r") as f:
-                start = time.time()
-                subprocess.run(["./" + "a.out"], stdin=f, stdout=subprocess.DEVNULL)
-                end = time.time()
+    for n in range(1000,6000,1000):
+        for l in range(10, 1000, 100):
+            for m in range(n, n*10, 1000):
+                gerar_testes(n, m, l, False)
+                with open("test.in", "r") as f:
+                    start = time.time()
+                    subprocess.run(["./" + "a.out"], stdin=f, stdout=subprocess.DEVNULL)
+                    end = time.time()
 
-            print(f"Teste {i} com n={n}, m={n*l} e l={l} demorou {end-start} segundos")
-            i += 1
-            valoresnl.append(n * l)
-            tempos.append(end - start)
+                print(f"Teste {i} com n={n}, m={m} e l={l} demorou {end-start} segundos")
+                i += 1
+                valoresnl.append(m * l * math.log2(l))
+                tempos.append(end - start)
 
     # Após coletar os dados, realizar a regressão por segmentos
     realizar_regressao_polynomial(valoresnl, tempos)
@@ -111,37 +112,22 @@ def correr_teste():
 Realizar a regressão por segmentos dos tempos de execução
 """
 def realizar_regressao_polynomial(valoresnl, tempos):
-    # Converte os dados para arrays numpy
-    X = np.array(valoresnl)
-    y = np.array(tempos)
+    # Plot all the data
+    plt.scatter(valoresnl, tempos, label="Dados experimentais", alpha=0.5, color="blue")
 
-    # Define o grau do polinômio
-    grau = 2  # Você pode ajustar o grau conforme necessário
+    degree = 2
+    coef = np.polyfit(valoresnl, tempos, degree)
+    poly_fn = np.poly1d(coef)
 
-    # Cria a matriz de design para a regressão polinomial
-    X_poly = np.column_stack([X**i for i in range(grau + 1)])
+    # Plot the curve
+    sorted_nml_values = sorted(valoresnl)
+    plt.plot(sorted_nml_values, poly_fn(sorted_nml_values), '--', label="Tendência global", color="red")
 
-    # Ajusta o modelo
-    modelo = sm.OLS(y, X_poly).fit()
-
-    # Gera previsões
-    y_pred = modelo.predict(X_poly)
-
-    # Plota os dados e a linha de ajuste
-    plt.scatter(X, y, color='blue', label='Dados reais')
-    plt.plot(X, y_pred, color='red', label='Tendencia')
-    plt.xlabel('f(n)')
-    plt.ylabel('Tempo (s)')
+    plt.xlabel("f(n,m,l)")
+    plt.ylabel("Time(s)")
+    plt.title("Curva de tendência para tempo de execução em função de f(n,m,l)")
     plt.legend()
     plt.show()
 
 
-
 correr_teste()
-
-
-
-
-            
-
-
