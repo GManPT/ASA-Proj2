@@ -91,19 +91,27 @@ def correr_teste():
     subprocess.run(["g++", "-std=c++11", "-O3", "-Wall", executavel, "-lm"])
     i = 1
 
-    for n in range(1000,6000,1000):
-        for l in range(10, 1000, 100):
-            for m in range(n, n*10, 1000):
-                gerar_testes(n, m, l, False)
-                with open("test.in", "r") as f:
-                    start = time.time()
-                    subprocess.run(["./" + "a.out"], stdin=f, stdout=subprocess.DEVNULL)
-                    end = time.time()
+    for n in range(0,100):
+        n1 = 50000+(n+1)*5000
+        m= 100000+(n+1)*10000
+        l = int(100+20*math.log(n+1))
 
-                print(f"Teste {i} com n={n}, m={m} e l={l} demorou {end-start} segundos")
-                i += 1
-                valoresnl.append(m * l * math.log2(l))
-                tempos.append(end - start)
+        gerar_testes(n1, m, l, False)
+
+        with open("test.in", "r") as f:
+            start = time.time()
+            subprocess.run(["./" + "a.out"], stdin=f, stdout=subprocess.DEVNULL)
+            end = time.time()
+
+        if ((end-start) <= 1):
+            print(f"Teste {i} com n={n1}, m={m} e l={l} demorou {end-start} segundos")
+            i += 1
+
+            valoresnl.append(m * l * math.log2(l))
+            tempos.append(end - start)
+        else:
+            print("Explodiu!")
+            continue
 
     # Após coletar os dados, realizar a regressão por segmentos
     realizar_regressao_polynomial(valoresnl, tempos)
@@ -112,9 +120,10 @@ def correr_teste():
 Realizar a regressão por segmentos dos tempos de execução
 """
 def realizar_regressao_polynomial(valoresnl, tempos):
-    # Plot all the data
-    plt.scatter(valoresnl, tempos, label="Dados experimentais", alpha=0.5, color="blue")
+    plt.figure(figsize=(10,6))
+    plt.scatter(valoresnl, tempos, label="Dados experimentais", alpha=0.6, color="blue", edgecolor="k")
 
+    # Ajust a curve of degree 2
     degree = 2
     coef = np.polyfit(valoresnl, tempos, degree)
     poly_fn = np.poly1d(coef)
@@ -123,10 +132,13 @@ def realizar_regressao_polynomial(valoresnl, tempos):
     sorted_nml_values = sorted(valoresnl)
     plt.plot(sorted_nml_values, poly_fn(sorted_nml_values), '--', label="Tendência global", color="red")
 
-    plt.xlabel("f(n,m,l)")
-    plt.ylabel("Time(s)")
-    plt.title("Curva de tendência para tempo de execução em função de f(n,m,l)")
+    # Configurações do gráfico
+    plt.xlabel("f(n,m,l) = m * l * log(l)", fontsize=12)
+    plt.ylabel("Tempo (s)", fontsize=12)
+    plt.title("Curva de Tendência para Tempo de Execução em Função de f(n,m,l)", fontsize=14)
     plt.legend()
+    plt.grid(True, linestyle='--', alpha=0.7)
+    plt.tight_layout()
     plt.show()
 
 
